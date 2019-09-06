@@ -1,0 +1,21 @@
+
+# This is only needed for building dist and library files
+gulpfile.js
+
+# We do not need the TypeScipt source in deployments
+src.browser/
+src.ts/
+
+tsconfig.json
+
+# To run tests, checkout GitHub
+tests/
+node_modules/
+docs/
+package-lock.json
+vue.config.js
+tsconfig.json
+.babelrc
+.circleci
+public/
+.vscode

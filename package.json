@@ -1,0 +1,66 @@
+{
+  "name": "mxw-ledger-signer",
+  "version": "0.5.0",
+  "description": "An MXW Signer for the Ledger hardware wallet.",
+  "main": "index.js",
+  "dependencies": {
+    "@babel/runtime": "^7.4.4",
+    "@ledgerhq/hw-transport": "^4.19.0",
+    "@types/node": "^10.3.2",
+    "ledger-cosmos-js": "^2.0.2",
+    "mxw-sdk-js": "^0.6.1",
+    "secp256k1": "^3.7.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.4",
+    "@babel/node": "^7.2.2",
+    "@babel/plugin-transform-runtime": "^7.4.4",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@ledgerhq/hw-transport-node-hid": "^4.19.1",
+    "@ledgerhq/hw-transport-u2f": "^4.20.0",
+    "@ledgerhq/hw-transport-webusb": "^4.61.0",
+    "@types/secp256k1": "^3.5.0",
+    "@vue/cli-plugin-babel": "^3.8.0",
+    "@vue/cli-plugin-eslint": "^3.8.0",
+    "@vue/cli-service": "^3.8.0",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-add-module-exports": "^1.0.2",
+    "browserify": "^16.2.2",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.2.3",
+    "gulp": "^4.0.0",
+    "gulp-cli": "^2.0.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-terser-js": "^5.0.0",
+    "gulp-typescript": "^5.0.0-alpha.1",
+    "tsify": "^4.0.0",
+    "typescript": "^2.9.1",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0",
+    "vue": "^2.6.10",
+    "vue-template-compiler": "^2.6.10"
+  },
+  "scripts": {
+    "auto-build": "npm run build -- -w",
+    "build": "tsc -p ./tsconfig.json",
+    "dist": "npm run build && gulp default minified",
+    "test": "npm run build && node tests/test.js",
+    "serve": "npm run build && vue-cli-service serve tests/vue/main.js"
+  },
+  "browser": {
+    "mxw": "./src.browser/mxw.ts",
+    "./src.ts/transport.ts": "./src.browser/transport.ts"
+  },
+  "keywords": [
+    "maxonrow",
+    "ledger",
+    "hardware",
+    "wallet",
+    "mxw",
+    "mxw.js"
+  ],
+  "author": "william khoo <william_khoo@outlook.com>",
+  "license": "MIT"
+}
