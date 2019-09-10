@@ -24,6 +24,12 @@ export declare class LedgerSigner extends Signer {
     getAccountNumber(blockTag?: BlockTag): Promise<mxw.utils.BigNumber>;
     getTransactionCount(blockTag?: BlockTag): Promise<mxw.utils.BigNumber>;
     transfer(addressOrName: string | Promise<string>, value: BigNumberish, overrides?: any): Promise<TransactionResponse | TransactionReceipt>;
+    isWhitelisted(blockTag?: BlockTag): Promise<Boolean>;
+    getKycAddress(blockTag?: BlockTag): Promise<string>;
+    createAlias(name: string | Promise<string>, appFee: {
+        to: string;
+        value: BigNumberish;
+    }, overrides?: any): Promise<TransactionResponse | TransactionReceipt>;
     connect(provider: Provider): LedgerSigner;
     clearNonce(): void;
     getCompressedPublicKey(): Promise<any>;

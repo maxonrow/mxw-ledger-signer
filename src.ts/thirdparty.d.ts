@@ -1,5 +1,5 @@
 
-declare module "ledger-cosmos-js" {
+declare module "ledger-mxw-js" {
 
     export type SignatureResponse = {
         return_code: number,

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mxw_sdk_js_1 = require("mxw-sdk-js");
-const ledger_cosmos_js_1 = __importDefault(require("ledger-cosmos-js"));
+const ledger_mxw_js_1 = __importDefault(require("ledger-mxw-js"));
 const utils_1 = require("mxw-sdk-js/dist/utils");
 const secp256k1_1 = require("secp256k1");
 const misc_1 = require("mxw-sdk-js/dist/utils/misc");
@@ -64,7 +64,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         }
         mxw_sdk_js_1.mxw.utils.defineReadOnly(this, 'provider', provider);
         mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_transport', transport);
-        mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_mxw', new ledger_cosmos_js_1.default(transport));
+        mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_mxw', new ledger_mxw_js_1.default(transport));
         this._ready = this.getAddressAndPubKey().then((result) => {
             this._addressAndPubKey = result;
             this.address = this._addressAndPubKey.bech32_address;
@@ -214,9 +214,13 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
             mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
         }
         if (addressOrName instanceof Promise) {
-            return addressOrName.then((address) => {
-                return this.transfer(address, value, overrides);
+            let addressPromise = _pending.then(() => {
+                return addressOrName.then((address) => {
+                    return this.transfer(address, value, overrides);
+                });
             });
+            _pending = addressPromise;
+            return addressPromise;
         }
         return this.resolveName(addressOrName).then((address) => {
             let transaction = this.provider.getTransactionRequest("bank", "bank-send", {
@@ -244,6 +248,68 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
                 });
             });
         });
+    }
+    isWhitelisted(blockTag) {
+        if (!this.provider) {
+            mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
+        }
+        let promise = _pending.then(() => {
+            return this.provider.isWhitelisted(this.address, blockTag);
+        });
+        _pending = promise;
+        return promise;
+    }
+    getKycAddress(blockTag) {
+        if (!this.provider) {
+            mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
+        }
+        let promise = _pending.then(() => {
+            return this.provider.getKycAddress(this.address, blockTag);
+        });
+        _pending = promise;
+        return promise;
+    }
+    createAlias(name, appFee, overrides) {
+        if (!this.provider) {
+            mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
+        }
+        utils_1.checkProperties(appFee, {
+            to: true,
+            value: true
+        }, true);
+        if (utils_1.bigNumberify(appFee.value).lte(0)) {
+            mxw_sdk_js_1.errors.throwError('create alias transaction require non-zero application fee', mxw_sdk_js_1.errors.MISSING_FEES, { value: appFee });
+        }
+        let promise = _pending.then(() => {
+            return utils_1.resolveProperties({ name: name }).then(({ name }) => {
+                let transaction = this.provider.getTransactionRequest("nameservice", "nameservice-createAlias", {
+                    appFeeTo: appFee.to,
+                    appFeeValue: appFee.value.toString(),
+                    name,
+                    owner: this.address,
+                    memo: (overrides && overrides.memo) ? overrides.memo : ""
+                });
+                transaction.fee = this.provider.getTransactionFee(undefined, undefined, { tx: transaction });
+                return this.sendTransaction(transaction, overrides).then((response) => {
+                    if (overrides && overrides.sendOnly) {
+                        return response;
+                    }
+                    let confirmations = (overrides && overrides.confirmations) ? Number(overrides.confirmations) : null;
+                    return this.provider.waitForTransaction(response.hash, confirmations).then((receipt) => {
+                        if (1 == receipt.status) {
+                            return receipt;
+                        }
+                        return mxw_sdk_js_1.errors.throwError("create alias failed", mxw_sdk_js_1.errors.CALL_EXCEPTION, {
+                            method: "nameservice/createAlias",
+                            response: response,
+                            receipt: receipt
+                        });
+                    });
+                });
+            });
+        });
+        _pending = promise;
+        return promise;
     }
     connect(provider) {
         return new LedgerSigner(this._transport, provider);

@@ -59,8 +59,6 @@
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import TransportU2F from '@ledgerhq/hw-transport-u2f';
-import {default as CosmosApp } from 'ledger-cosmos-js';
-import { mxw } from 'mxw-sdk-js';
 import { LedgerSigner } from '../../..';
 import { JsonRpcProvider } from 'mxw-sdk-js/dist/providers';
 

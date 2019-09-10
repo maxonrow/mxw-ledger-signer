@@ -1,8 +1,8 @@
 
 import { mxw, Signer, errors } from 'mxw-sdk-js';
-import { default as CosmosApp } from 'ledger-cosmos-js';
+import { default as MxwApp } from 'ledger-mxw-js';
 
-import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish } from 'mxw-sdk-js/dist/utils';
+import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify } from 'mxw-sdk-js/dist/utils';
 import { Provider, TransactionRequest, TransactionResponse, BlockTag, TransactionReceipt } from 'mxw-sdk-js/dist/providers';
 import { signatureImport } from 'secp256k1';
 import { sortObject } from 'mxw-sdk-js/dist/utils/misc';
@@ -60,7 +60,7 @@ export class LedgerSigner extends Signer {
 
     private _config: string;
     private _transport: any;
-    private _mxw: CosmosApp;
+    private _mxw: MxwApp;
 
     private _ready: Promise<void>
 
@@ -84,7 +84,7 @@ export class LedgerSigner extends Signer {
 
         mxw.utils.defineReadOnly(this, 'provider', provider);       
         mxw.utils.defineReadOnly(this, '_transport', transport);
-        mxw.utils.defineReadOnly(this, '_mxw', new CosmosApp(transport));
+        mxw.utils.defineReadOnly(this, '_mxw', new MxwApp(transport));
 
         this._ready = this.getAddressAndPubKey().then((result: any) => {
             this._addressAndPubKey = result;
@@ -284,6 +284,70 @@ export class LedgerSigner extends Signer {
                 });
             });
         });
+    }
+
+    isWhitelisted(blockTag?: BlockTag): Promise<Boolean> {
+        if (!this.provider) { errors.throwError('missing provider', errors.NOT_INITIALIZED, { argument: 'provider' }); }
+        let promise = _pending.then(()=>{
+            return this.provider.isWhitelisted(this.address, blockTag);
+        })
+        _pending = promise;
+        return promise;
+    }
+
+    getKycAddress(blockTag?: BlockTag): Promise<string> {
+        if (!this.provider) { errors.throwError('missing provider', errors.NOT_INITIALIZED, { argument: 'provider' }); }
+        let promise = _pending.then(()=>{
+            return this.provider.getKycAddress(this.address, blockTag);
+        })
+        _pending = promise;
+        return promise;
+    }
+
+    createAlias(name: string | Promise<string>, appFee: { to: string, value: BigNumberish }, overrides?: any): Promise<TransactionResponse | TransactionReceipt> {
+        if (!this.provider) { errors.throwError('missing provider', errors.NOT_INITIALIZED, { argument: 'provider' }); }
+
+        checkProperties(appFee, {
+            to: true,
+            value: true
+        }, true);
+
+        if (bigNumberify(appFee.value).lte(0)) {
+            errors.throwError('create alias transaction require non-zero application fee', errors.MISSING_FEES, { value: appFee });
+        }
+
+        let promise = _pending.then(()=>{
+           return resolveProperties({ name: name }).then(({ name }) => {
+                let transaction = this.provider.getTransactionRequest("nameservice", "nameservice-createAlias", {
+                    appFeeTo: appFee.to,
+                    appFeeValue: appFee.value.toString(),
+                    name,
+                    owner: this.address,
+                    memo: (overrides && overrides.memo) ? overrides.memo : ""
+                });
+                transaction.fee = this.provider.getTransactionFee(undefined, undefined, { tx: transaction });
+    
+                return this.sendTransaction(transaction, overrides).then((response) => {
+                    if (overrides && overrides.sendOnly) {
+                        return response;
+                    }
+                    let confirmations = (overrides && overrides.confirmations) ? Number(overrides.confirmations) : null;
+    
+                    return this.provider.waitForTransaction(response.hash, confirmations).then((receipt) => {
+                        if (1 == receipt.status) {
+                            return receipt;
+                        }
+                        return errors.throwError("create alias failed", errors.CALL_EXCEPTION, {
+                            method: "nameservice/createAlias",
+                            response: response,
+                            receipt: receipt
+                        });
+                    });
+                });
+            });
+        });
+        _pending = promise;
+        return promise;
     }
 
     connect(provider: Provider) {
