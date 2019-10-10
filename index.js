@@ -160,7 +160,6 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         }
         return transaction_1.populateTransaction(transaction, this.provider, this.address).then((tx) => {
             return this.sign(tx, overrides).then((signedTransaction) => {
-                console.log('signedTransaction', signedTransaction);
                 return this.provider.sendTransaction(signedTransaction, overrides).catch(error => {
                     // Clear the cached nonce when failure happened to prevent it out of sequence
                     this.clearNonce();

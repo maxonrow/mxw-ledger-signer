@@ -193,7 +193,6 @@ export class LedgerSigner extends Signer {
         if (!this.provider) { errors.throwError('missing provider', errors.NOT_INITIALIZED, { argument: 'provider' }); }
             return populateTransaction(transaction, this.provider, this.address).then((tx) => {
                 return this.sign(tx, overrides).then((signedTransaction) => {
-                    console.log('signedTransaction', signedTransaction);
                     return this.provider.sendTransaction(signedTransaction, overrides).catch(error => {
                         // Clear the cached nonce when failure happened to prevent it out of sequence
                         this.clearNonce();
