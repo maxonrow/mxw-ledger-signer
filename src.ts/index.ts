@@ -2,7 +2,7 @@
 import { mxw, Signer, errors } from 'mxw-sdk-js';
 import { default as MxwApp } from 'ledger-mxw-js';
 
-import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify } from 'mxw-sdk-js/dist/utils';
+import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify, hashMessage } from 'mxw-sdk-js/dist/utils';
 import { Provider, TransactionRequest, TransactionResponse, BlockTag, TransactionReceipt } from 'mxw-sdk-js/dist/providers';
 import { signatureImport } from 'secp256k1';
 import { sortObject } from 'mxw-sdk-js/dist/utils/misc';
@@ -204,8 +204,22 @@ export class LedgerSigner extends Signer {
 
     signMessage(message: Arrayish | string): Promise<string> {
         //ledger signing required chain id etc parameter, thus sign message not implemented
-        errors.throwError("not implemented", errors.NOT_IMPLEMENTED, { argument: message })
-        return Promise.resolve("not implemented");
+       // errors.throwError("not implemented", errors.NOT_IMPLEMENTED, { argument: message })
+        //return Promise.resolve("not implemented");
+        let signPromise = _pending.then(() => {
+            return this._mxw.sign(this.path, hashMessage(message)).then((signatureResponse) => {
+                console.log(signatureResponse);
+                if(signatureResponse.return_code!== 0x9000){
+                    errors.throwError(signatureResponse.error_message, errors.INVALID_ARGUMENT, { argument: message })
+                }
+                const signatureDER = signatureResponse.signature;
+                const signature = signatureImport(signatureDER);
+                const sig = '0x' + signature.toString("hex");
+                return Promise.resolve(sig);
+            });
+        });
+        _pending = signPromise;
+        return signPromise;   
     }
 
     getBalance(blockTag?: BlockTag) {

@@ -170,8 +170,22 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     }
     signMessage(message) {
         //ledger signing required chain id etc parameter, thus sign message not implemented
-        mxw_sdk_js_1.errors.throwError("not implemented", mxw_sdk_js_1.errors.NOT_IMPLEMENTED, { argument: message });
-        return Promise.resolve("not implemented");
+        // errors.throwError("not implemented", errors.NOT_IMPLEMENTED, { argument: message })
+        //return Promise.resolve("not implemented");
+        let signPromise = _pending.then(() => {
+            return this._mxw.sign(this.path, utils_1.hashMessage(message)).then((signatureResponse) => {
+                console.log(signatureResponse);
+                if (signatureResponse.return_code !== 0x9000) {
+                    mxw_sdk_js_1.errors.throwError(signatureResponse.error_message, mxw_sdk_js_1.errors.INVALID_ARGUMENT, { argument: message });
+                }
+                const signatureDER = signatureResponse.signature;
+                const signature = secp256k1_1.signatureImport(signatureDER);
+                const sig = '0x' + signature.toString("hex");
+                return Promise.resolve(sig);
+            });
+        });
+        _pending = signPromise;
+        return signPromise;
     }
     getBalance(blockTag) {
         if (!this.provider) {
