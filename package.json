@@ -7,7 +7,7 @@
     "@babel/runtime": "^7.4.4",
     "@ledgerhq/hw-transport": "^4.73.3",
     "@types/node": "^10.3.2",
-    "ledger-mxw-js": "^1.0.1",
+    "ledger-mxw-js": "^1.0.2",
     "mxw-sdk-js": "^0.6.1",
     "secp256k1": "^3.7.1"
   },

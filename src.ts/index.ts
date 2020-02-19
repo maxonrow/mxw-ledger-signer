@@ -2,7 +2,7 @@
 import { mxw, Signer, errors } from 'mxw-sdk-js';
 import { default as MxwApp } from 'ledger-mxw-js';
 
-import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify, hashMessage } from 'mxw-sdk-js/dist/utils';
+import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify, hashMessage, hexlify } from 'mxw-sdk-js/dist/utils';
 import { Provider, TransactionRequest, TransactionResponse, BlockTag, TransactionReceipt } from 'mxw-sdk-js/dist/providers';
 import { signatureImport } from 'secp256k1';
 import { sortObject } from 'mxw-sdk-js/dist/utils/misc';
@@ -179,7 +179,7 @@ export class LedgerSigner extends Signer {
                     }
                     const signatureDER = signatureResponse.signature;
                     const signature = signatureImport(signatureDER);
-                    const sig = '0x' + signature.toString();
+                    const sig = hexlify(signature);
                     return mxw.utils.serializeTransaction(tx, sig, this._addressAndPubKey.compressed_pk);
                 });
             });
@@ -214,7 +214,7 @@ export class LedgerSigner extends Signer {
                 }
                 const signatureDER = signatureResponse.signature;
                 const signature = signatureImport(signatureDER);
-                const sig = '0x' + signature.toString();
+                const sig = hexlify(signature);
                 return Promise.resolve(sig);
             });
         });

@@ -146,7 +146,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
                     }
                     const signatureDER = signatureResponse.signature;
                     const signature = secp256k1_1.signatureImport(signatureDER);
-                    const sig = '0x' + signature.toString();
+                    const sig = utils_1.hexlify(signature);
                     return mxw_sdk_js_1.mxw.utils.serializeTransaction(tx, sig, this._addressAndPubKey.compressed_pk);
                 });
             });
@@ -180,7 +180,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
                 }
                 const signatureDER = signatureResponse.signature;
                 const signature = secp256k1_1.signatureImport(signatureDER);
-                const sig = '0x' + signature.toString();
+                const sig = utils_1.hexlify(signature);
                 return Promise.resolve(sig);
             });
         });
@@ -349,7 +349,6 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     }
     getAddressAndPubKey() {
         let addressPromise = _pending.then(() => {
-            console.log(this._mxw);
             return this._mxw.showAddressAndPubKey(this.path, hrp).then((result) => {
                 this._addressAndPubKey = result;
                 return result;
