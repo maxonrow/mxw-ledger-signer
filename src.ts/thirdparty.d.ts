@@ -43,6 +43,7 @@ declare module "ledger-mxw-js" {
         getVersion(): Promise<AppVersion>;
         appInfo(): Promise<AppInfo>;
         getAddressAndPubKey(path: string, hrp: string): Promise<AddressPubKey>;
+        showAddressAndPubKey(path: string, hrp: string): Promise<AddressPubKey>;
         sign(path: string, unsignedTx: string): Promise<SignatureResponse>;
     }
 

@@ -179,7 +179,7 @@ export class LedgerSigner extends Signer {
                     }
                     const signatureDER = signatureResponse.signature;
                     const signature = signatureImport(signatureDER);
-                    const sig = '0x' + signature.toString("hex");
+                    const sig = '0x' + signature.toString();
                     return mxw.utils.serializeTransaction(tx, sig, this._addressAndPubKey.compressed_pk);
                 });
             });
@@ -214,7 +214,7 @@ export class LedgerSigner extends Signer {
                 }
                 const signatureDER = signatureResponse.signature;
                 const signature = signatureImport(signatureDER);
-                const sig = '0x' + signature.toString("hex");
+                const sig = '0x' + signature.toString();
                 return Promise.resolve(sig);
             });
         });
@@ -393,7 +393,7 @@ export class LedgerSigner extends Signer {
 
     private getAddressAndPubKey() : Promise<any> {
         let addressPromise = _pending.then(() => {
-            return this._mxw.getAddressAndPubKey(this.path, hrp).then((result: any)=>{
+            return this._mxw.showAddressAndPubKey(this.path, hrp).then((result: any)=>{
                 this._addressAndPubKey = result;
                 return result;
             });
