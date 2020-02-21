@@ -44,5 +44,10 @@ LedgerSigner.connect(Transport, provider).then((signer) => {
         console.log('Transaction', tx);
     });
 
+    let kyc = {"from":"mxw1xctkm9fx7msfn0tthwnwdrcyms9tg0u2f98hpv","kycAddress":"0x5dae11613ac214eda7febcf8f7a360ffe620a685e324aa43e1f399f2290631e5","nonce":"0"};
+
+    signer.signMessage(JSON.stringify(kyc)).then((tx) => {
+        console.log('kyc', tx);
+    });
 });
 
