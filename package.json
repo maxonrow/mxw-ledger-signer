@@ -1,6 +1,6 @@
 {
   "name": "mxw-ledger-signer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An MXW Signer for the Ledger hardware wallet.",
   "main": "index.js",
   "dependencies": {

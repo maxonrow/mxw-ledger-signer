@@ -169,12 +169,10 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         });
     }
     signMessage(message) {
+        /* currently sign only support kyc, and transaction with chain_id, fee etc  */
         let signPromise = _pending.then(() => {
-            console.log("sign message, " + message);
             let msg = ((typeof (message) === 'string') ? message : utils_1.toUtf8String(message));
-            console.log('msg', msg);
             return this._mxw.sign(this.path, msg).then((signatureResponse) => {
-                console.log(signatureResponse);
                 if (signatureResponse.return_code !== 0x9000) {
                     mxw_sdk_js_1.errors.throwError(signatureResponse.error_message, mxw_sdk_js_1.errors.INVALID_ARGUMENT, { argument: message });
                 }
