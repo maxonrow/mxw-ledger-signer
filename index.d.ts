@@ -14,7 +14,7 @@ export declare class LedgerSigner extends Signer {
     private address;
     private accountNumber;
     constructor(transport: any, provider: Provider, options?: Options);
-    readonly config: any;
+    get config(): any;
     getConfig(): Promise<any>;
     getAddress(): Promise<string>;
     sign(transaction: TransactionRequest, overrides?: any): Promise<string>;
