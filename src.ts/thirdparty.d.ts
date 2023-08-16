@@ -1,3 +1,4 @@
+import Transport from "@ledgerhq/hw-transport"
 
 declare module "ledger-mxw-js" {
 
@@ -20,7 +21,8 @@ declare module "ledger-mxw-js" {
         target_id: string
     }
 
-    export type AppInfo = { return_code: number,
+    export type AppInfo = {
+        return_code: number,
         error_message: string,
         appName: string,
         appVersion: string,
@@ -29,7 +31,8 @@ declare module "ledger-mxw-js" {
         flag_recovery: boolean,
         flag_signed_mcu_code: boolean,
         flag_onboarded: boolean,
-        flag_pin_validated: boolean }
+        flag_pin_validated: boolean
+    }
 
     export type AddressPubKey = {
         bech32_address: string,
@@ -38,16 +41,16 @@ declare module "ledger-mxw-js" {
         error_message: string,
     }
 
-    export class CosmosApp {
+    export default class CosmosApp {
         constructor(transport: Transport);
         getVersion(): Promise<AppVersion>;
         appInfo(): Promise<AppInfo>;
-        getAddressAndPubKey(path: string, hrp: string): Promise<AddressPubKey>;
-        showAddressAndPubKey(path: string, hrp: string): Promise<AddressPubKey>;
-        sign(path: string, unsignedTx: string): Promise<SignatureResponse>;
+        getAddressAndPubKey(path:Array<number>, hrp: string): Promise<AddressPubKey>;
+        showAddressAndPubKey(path: Array<number>, hrp: string): Promise<AddressPubKey>;
+        sign(path: Array<number>, unsignedTx: Buffer, hrp: string | undefined): Promise<SignatureResponse>;
     }
 
-    export default CosmosApp;
+    //export  CosmosApp;
 }
 /*
 declare module "@ledgerhq/hw-transport-node-hid" {

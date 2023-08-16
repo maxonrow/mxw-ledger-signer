@@ -1,11 +1,12 @@
 import { mxw, Signer } from 'mxw-sdk-js';
 import { Arrayish, BigNumberish } from 'mxw-sdk-js/dist/utils';
 import { Provider, TransactionRequest, TransactionResponse, BlockTag, TransactionReceipt } from 'mxw-sdk-js/dist/providers';
-export declare type Options = {
+export type Options = {
     path?: string;
 };
 export declare class LedgerSigner extends Signer {
     readonly path: string;
+    readonly pathArray: Array<number>;
     private _config;
     private _transport;
     private _mxw;

@@ -1,6 +1,6 @@
 
 import { mxw, Signer, errors } from 'mxw-sdk-js';
-import { default as MxwApp } from 'ledger-mxw-js';
+import { MxwApp } from 'ledger-mxw-js';
 
 import { computeHexAddress, BigNumber, shallowCopy, Arrayish, resolveProperties, iterate, BigNumberish, checkProperties, bigNumberify, hexlify, toUtf8String } from 'mxw-sdk-js/dist/utils';
 import { Provider, TransactionRequest, TransactionResponse, BlockTag, TransactionReceipt } from 'mxw-sdk-js/dist/providers';
@@ -58,6 +58,8 @@ let _pending: Promise<any> = Promise.resolve(null);
 export class LedgerSigner extends Signer {
     readonly path: string;
 
+    readonly pathArray: Array<number>;
+
     private _config: string;
     private _transport: any;
     private _mxw: MxwApp;
@@ -81,7 +83,7 @@ export class LedgerSigner extends Signer {
         }else if (Array.isArray(options.path)) {
             mxw.utils.defineReadOnly(this, 'path', options.path);
         }
-
+        this.pathArray = getPathArray(options.path);
         mxw.utils.defineReadOnly(this, 'provider', provider);       
         mxw.utils.defineReadOnly(this, '_transport', transport);
         mxw.utils.defineReadOnly(this, '_mxw', new MxwApp(transport));
@@ -173,7 +175,7 @@ export class LedgerSigner extends Signer {
                 overrides.logSignaturePayload(payload);
             }
             let signPromise = _pending.then(() => {
-                return this._mxw.sign(this.path, JSON.stringify(payload)).then((signatureResponse) => {
+                return this._mxw.sign(this.pathArray, Buffer.from(JSON.stringify(payload), "utf-8"), hrp).then((signatureResponse) => {
                     if(signatureResponse.return_code!== 0x9000){
                         errors.throwError(signatureResponse.error_message, errors.INVALID_ARGUMENT, { argument: transaction })
                     }
@@ -206,7 +208,7 @@ export class LedgerSigner extends Signer {
         /* currently sign only support kyc, and transaction with chain_id, fee etc  */
         let signPromise = _pending.then(() => {
             let msg = ((typeof(message) === 'string') ? message: toUtf8String(message) );
-            return this._mxw.sign(this.path, msg).then((signatureResponse) => {
+            return this._mxw.sign(this.pathArray,  Buffer.from(msg, "utf-8"), hrp).then((signatureResponse) => {
                 if(signatureResponse.return_code!== 0x9000){
                     errors.throwError(signatureResponse.error_message, errors.INVALID_ARGUMENT, { argument: message })
                 }
@@ -391,7 +393,7 @@ export class LedgerSigner extends Signer {
 
     private getAddressAndPubKey() : Promise<any> {
         let addressPromise = _pending.then(() => {
-            return this._mxw.showAddressAndPubKey(this.path, hrp).then((result: any)=>{
+            return this._mxw.showAddressAndPubKey(this.pathArray, hrp).then((result: any)=>{
                 this._addressAndPubKey = result;
                 return result;
             });

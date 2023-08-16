@@ -1,10 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LedgerSigner = void 0;
 const mxw_sdk_js_1 = require("mxw-sdk-js");
-const ledger_mxw_js_1 = __importDefault(require("ledger-mxw-js"));
+const ledger_mxw_js_1 = require("ledger-mxw-js");
 const utils_1 = require("mxw-sdk-js/dist/utils");
 const secp256k1_1 = require("secp256k1");
 const misc_1 = require("mxw-sdk-js/dist/utils/misc");
@@ -62,9 +60,10 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         else if (Array.isArray(options.path)) {
             mxw_sdk_js_1.mxw.utils.defineReadOnly(this, 'path', options.path);
         }
+        this.pathArray = getPathArray(options.path);
         mxw_sdk_js_1.mxw.utils.defineReadOnly(this, 'provider', provider);
         mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_transport', transport);
-        mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_mxw', new ledger_mxw_js_1.default(transport));
+        mxw_sdk_js_1.mxw.utils.defineReadOnly(this, '_mxw', new ledger_mxw_js_1.MxwApp(transport));
         this._ready = this.getAddressAndPubKey().then((result) => {
             this._addressAndPubKey = result;
             this.address = this._addressAndPubKey.bech32_address;
@@ -89,7 +88,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     }
     sign(transaction, overrides) {
         if (transaction.nonce == null || transaction.accountNumber == null) {
-            transaction = utils_1.shallowCopy(transaction);
+            transaction = (0, utils_1.shallowCopy)(transaction);
             if (transaction.nonce == null) {
                 transaction.nonce = this.getTransactionCount("pending");
             }
@@ -97,7 +96,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
                 transaction.accountNumber = this.getAccountNumber();
             }
         }
-        return utils_1.resolveProperties(transaction).then((tx) => {
+        return (0, utils_1.resolveProperties)(transaction).then((tx) => {
             if (!tx.nonce || !tx.accountNumber || !tx.value || !tx.value.msg || !Array.isArray(tx.value.msg)) {
                 mxw_sdk_js_1.errors.throwError('missing transaction field', mxw_sdk_js_1.errors.MISSING_ARGUMENT, { argument: 'value', value: tx });
             }
@@ -126,7 +125,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
             this.nonce = tx.nonce;
             payload.sequence = tx.nonce.toString();
             // Convert number and big number to string
-            payload = utils_1.iterate(payload, function (key, value, type) {
+            payload = (0, utils_1.iterate)(payload, function (key, value, type) {
                 switch (type) {
                     case "Number":
                     case "BigNumber":
@@ -134,19 +133,19 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
                 }
                 return value;
             });
-            payload = misc_1.sortObject(payload);
+            payload = (0, misc_1.sortObject)(payload);
             // Log signature payload
             if (overrides && overrides.logSignaturePayload) {
                 overrides.logSignaturePayload(payload);
             }
             let signPromise = _pending.then(() => {
-                return this._mxw.sign(this.path, JSON.stringify(payload)).then((signatureResponse) => {
+                return this._mxw.sign(this.pathArray, Buffer.from(JSON.stringify(payload), "utf-8"), hrp).then((signatureResponse) => {
                     if (signatureResponse.return_code !== 0x9000) {
                         mxw_sdk_js_1.errors.throwError(signatureResponse.error_message, mxw_sdk_js_1.errors.INVALID_ARGUMENT, { argument: transaction });
                     }
                     const signatureDER = signatureResponse.signature;
-                    const signature = secp256k1_1.signatureImport(signatureDER);
-                    const sig = utils_1.hexlify(signature);
+                    const signature = (0, secp256k1_1.signatureImport)(signatureDER);
+                    const sig = (0, utils_1.hexlify)(signature);
                     return mxw_sdk_js_1.mxw.utils.serializeTransaction(tx, sig, this._addressAndPubKey.compressed_pk);
                 });
             });
@@ -158,7 +157,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         if (!this.provider) {
             mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
         }
-        return transaction_1.populateTransaction(transaction, this.provider, this.address).then((tx) => {
+        return (0, transaction_1.populateTransaction)(transaction, this.provider, this.address).then((tx) => {
             return this.sign(tx, overrides).then((signedTransaction) => {
                 return this.provider.sendTransaction(signedTransaction, overrides).catch(error => {
                     // Clear the cached nonce when failure happened to prevent it out of sequence
@@ -171,14 +170,14 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     signMessage(message) {
         /* currently sign only support kyc, and transaction with chain_id, fee etc  */
         let signPromise = _pending.then(() => {
-            let msg = ((typeof (message) === 'string') ? message : utils_1.toUtf8String(message));
-            return this._mxw.sign(this.path, msg).then((signatureResponse) => {
+            let msg = ((typeof (message) === 'string') ? message : (0, utils_1.toUtf8String)(message));
+            return this._mxw.sign(this.pathArray, Buffer.from(msg, "utf-8"), hrp).then((signatureResponse) => {
                 if (signatureResponse.return_code !== 0x9000) {
                     mxw_sdk_js_1.errors.throwError(signatureResponse.error_message, mxw_sdk_js_1.errors.INVALID_ARGUMENT, { argument: message });
                 }
                 const signatureDER = signatureResponse.signature;
-                const signature = secp256k1_1.signatureImport(signatureDER);
-                const sig = utils_1.hexlify(signature);
+                const signature = (0, secp256k1_1.signatureImport)(signatureDER);
+                const sig = (0, utils_1.hexlify)(signature);
                 return Promise.resolve(sig);
             });
         });
@@ -284,15 +283,15 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
         if (!this.provider) {
             mxw_sdk_js_1.errors.throwError('missing provider', mxw_sdk_js_1.errors.NOT_INITIALIZED, { argument: 'provider' });
         }
-        utils_1.checkProperties(appFee, {
+        (0, utils_1.checkProperties)(appFee, {
             to: true,
             value: true
         }, true);
-        if (utils_1.bigNumberify(appFee.value).lte(0)) {
+        if ((0, utils_1.bigNumberify)(appFee.value).lte(0)) {
             mxw_sdk_js_1.errors.throwError('create alias transaction require non-zero application fee', mxw_sdk_js_1.errors.MISSING_FEES, { value: appFee });
         }
         let promise = _pending.then(() => {
-            return utils_1.resolveProperties({ name: name }).then(({ name }) => {
+            return (0, utils_1.resolveProperties)({ name: name }).then(({ name }) => {
                 let transaction = this.provider.getTransactionRequest("nameservice", "nameservice-createAlias", {
                     appFeeTo: appFee.to,
                     appFeeValue: appFee.value.toString(),
@@ -337,7 +336,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     }
     getHexAddress() {
         let promise = _pending.then(() => {
-            return utils_1.computeHexAddress(this._addressAndPubKey.bech32_address);
+            return (0, utils_1.computeHexAddress)(this._addressAndPubKey.bech32_address);
         });
         _pending = promise;
         return promise;
@@ -347,7 +346,7 @@ class LedgerSigner extends mxw_sdk_js_1.Signer {
     }
     getAddressAndPubKey() {
         let addressPromise = _pending.then(() => {
-            return this._mxw.showAddressAndPubKey(this.path, hrp).then((result) => {
+            return this._mxw.showAddressAndPubKey(this.pathArray, hrp).then((result) => {
                 this._addressAndPubKey = result;
                 return result;
             });
